@@ -10,11 +10,6 @@
 
 Geyser is a bridge between Minecraft: Bedrock Edition and Minecraft: Java Edition, closing the gap from those wanting to play true cross-platform.
 
-THIS IS A MODIFIED VERSION OF GEYSER
-## Things that this fixes:
-[Grindstones and Smithing tables (mostly)](https://github.com/GeyserMC/Geyser/pull/1360)
-[keepalive timout glitch that kicks players and now haas more accurate ping](https://github.com/GeyserMC/Geyser/pull/1591)
-
 Geyser is an open collaboration project by [CubeCraft Games](https://cubecraft.net).
 
 ## What is Geyser?
@@ -47,7 +42,7 @@ Take a look [here](https://github.com/GeyserMC/Geyser/wiki#Setup) for how to set
   - [ ] Structure Block
   - [ ] Horse Inventory
   - [ ] Loom
-  - [ ] Smithing Table - fixed in this
+  - [ ] Smithing Table
 - Some Entity Flags
 
 ## Compiling
