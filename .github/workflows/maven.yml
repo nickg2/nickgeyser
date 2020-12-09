@@ -24,7 +24,7 @@ jobs:
         with:
           java-version: 1.8
       - name: submodules-init
-        uses: snickerbockers/submodules-init@v4
+        run: git submodule update --init
       - name: Build with Maven
         run: mvn -B package -T 2C
       - name: Archive artifacts (Geyser Standalone)
