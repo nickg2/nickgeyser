@@ -88,7 +88,6 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
                         break;
                     }
                 }
-                
                 InventoryTranslator.INVENTORY_TRANSLATORS.get(inv.getWindowType()).updateInventory(session, inv);
                 InventoryUtils.updateCursor(session);
                 break;
