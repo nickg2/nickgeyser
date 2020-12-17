@@ -2,9 +2,9 @@ name: Build Pull Request
 
 on: 
   push:
-    branches: [ book ]
+    branches: [ main ]
   pull_request:
-    branches: [ book ]
+    branches: [ main ]
 
 jobs:
   build:
