@@ -46,7 +46,7 @@ Take a look [here](https://github.com/GeyserMC/Geyser/wiki#Setup) for how to set
   - Structure Block
   - Horse Inventory
   - Loom
-  - Smithing Table (Fixed)
+  - Smithing Table (works?)
 
 ## What can't be fixed
 The following things can't be fixed because of Bedrock limitations. They might be fixable in the future, but not as of now.
