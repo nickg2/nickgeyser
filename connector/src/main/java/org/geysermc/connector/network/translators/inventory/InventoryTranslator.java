@@ -53,7 +53,7 @@ public abstract class InventoryTranslator {
             put(WindowType.BREWING_STAND, new BrewingInventoryTranslator());
             put(WindowType.ANVIL, new AnvilInventoryTranslator());
             put(WindowType.CRAFTING, new CraftingInventoryTranslator());
-            put(WindowType.GRINDSTONE, new GrindstoneInventoryTranslator()); //FIXME
+            //put(WindowType.GRINDSTONE, new GrindstoneInventoryTranslator()); //FIXME
             put(WindowType.MERCHANT, new MerchantInventoryTranslator());
             put(WindowType.SMITHING, new SmithingInventoryTranslator()); //TODO for server authoritative inventories
 

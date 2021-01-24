@@ -80,7 +80,6 @@ public class BookPagesTranslator extends NbtItemStackTranslator {
             StringTag textTag = pageTag.get("text");
             pages.add(new StringTag("", textTag.getValue()));
         }
-
         itemTag.remove("pages");
         itemTag.put(new ListTag("pages", pages));
     }
