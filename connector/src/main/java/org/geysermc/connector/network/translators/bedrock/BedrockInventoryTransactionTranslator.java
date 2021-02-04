@@ -25,13 +25,11 @@
 
 package org.geysermc.connector.network.translators.bedrock;
 
-import com.github.steveice10.mc.protocol.data.game.entity.metadata.ItemStack;
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.data.game.entity.player.Hand;
 import com.github.steveice10.mc.protocol.data.game.entity.player.InteractAction;
 import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerAction;
-import com.github.steveice10.mc.protocol.data.game.window.WindowType;
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockFace;
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerActionPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerInteractEntityPacket;
@@ -44,24 +42,23 @@ import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlags;
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerId;
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerType;
+import com.nukkitx.protocol.bedrock.data.inventory.InventoryActionData;
+import com.nukkitx.protocol.bedrock.data.inventory.InventorySource;
 import com.nukkitx.protocol.bedrock.packet.*;
 import org.geysermc.connector.entity.CommandBlockMinecartEntity;
 import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.ItemFrameEntity;
 import org.geysermc.connector.entity.living.merchant.AbstractMerchantEntity;
 import org.geysermc.connector.entity.type.EntityType;
-import org.geysermc.connector.inventory.Inventory;
+import org.geysermc.connector.inventory.GeyserItemStack;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
-import org.geysermc.connector.network.translators.inventory.InventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.SmithingInventoryTranslator;
 import org.geysermc.connector.network.translators.item.ItemEntry;
 import org.geysermc.connector.network.translators.item.ItemRegistry;
 import org.geysermc.connector.network.translators.sound.EntitySoundInteractionHandler;
 import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 import org.geysermc.connector.utils.BlockUtils;
-import org.geysermc.connector.utils.InventoryUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -84,23 +81,35 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
 
         switch (packet.getTransactionType()) {
             case NORMAL:
-                Inventory inventory = session.getInventoryCache().getOpenInventory();
-                if (inventory == null) inventory = session.getInventory();
-                InventoryTranslator.INVENTORY_TRANSLATORS.get(inventory.getWindowType()).translateActions(session, inventory, packet.getActions());
-                break;
-            case INVENTORY_MISMATCH:
-                Inventory inv = session.getInventoryCache().getOpenInventory();
-                if (inv == null) inv = session.getInventory();
-                if (inv.getWindowType() != null && inv.getWindowType() == WindowType.SMITHING) {
-                    if (inv.getItem(0).getId() != 0 && inv.getItem(1).getId() != 0 && inv.getItem(2).getId() != 0) {
-                        // Hack in legacy support for getting items from the smithing table
-                        // For some reason inventory mismatch is called when using client authoritative inventories
-                        SmithingInventoryTranslator.receiveItem(session, inv);
-                        break;
+                if (packet.getActions().size() == 2) {
+                    InventoryActionData worldAction = packet.getActions().get(0);
+                    InventoryActionData containerAction = packet.getActions().get(1);
+                    if (worldAction.getSource().getType() == InventorySource.Type.WORLD_INTERACTION
+                            && worldAction.getSource().getFlag() == InventorySource.Flag.DROP_ITEM) {
+                        session.addInventoryTask(() -> {
+                            if (session.getPlayerInventory().getHeldItemSlot() != containerAction.getSlot())
+                                return;
+                            if (session.getPlayerInventory().getItemInHand().isEmpty())
+                                return;
+
+                            boolean dropAll = worldAction.getToItem().getCount() > 1;
+                            ClientPlayerActionPacket dropAllPacket = new ClientPlayerActionPacket(
+                                    dropAll ? PlayerAction.DROP_ITEM_STACK : PlayerAction.DROP_ITEM,
+                                    new Position(0, 0, 0),
+                                    BlockFace.DOWN
+                            );
+                            session.sendDownstreamPacket(dropAllPacket);
+
+                            if (dropAll) {
+                                session.getPlayerInventory().setItemInHand(GeyserItemStack.EMPTY);
+                            } else {
+                                session.getPlayerInventory().getItemInHand().sub(1);
+                            }
+                        });
                     }
                 }
-                InventoryTranslator.INVENTORY_TRANSLATORS.get(inv.getWindowType()).updateInventory(session, inv);
-                InventoryUtils.updateCursor(session);
+                break;
+            case INVENTORY_MISMATCH:
                 break;
             case ITEM_USE:
                 switch (packet.getActionType()) {
@@ -225,9 +234,8 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
                         session.setInteracting(true);
                         break;
                     case 1:
-                        ItemStack shieldSlot = session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36);
                         // Handled in Entity.java
-                        if (shieldSlot != null && shieldSlot.getId() == ItemRegistry.SHIELD.getJavaId()) {
+                        if (session.getPlayerInventory().getItemInHand().getJavaId() == ItemRegistry.SHIELD.getJavaId()) {
                             break;
                         }
 
